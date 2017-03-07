@@ -50,7 +50,3 @@ def extract_feats(filenames,batch_size):
         curr_feats = np.array(curr_feats)
         np.save(file[:-4] + '.npy',curr_feats)
         print "Saved file {}\nExiting".format(file[:-4] + '.npy')
-
-if __name__ == '__main__':
-    filenames = ['Data/YoutubeClips/uqVCk2oDpSE_194_200.avi']
-    feats = extract_feats(filenames,4)
