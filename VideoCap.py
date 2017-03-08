@@ -29,17 +29,17 @@ class S2VT:
         with tf.variable_scope('Im2Cap') as scope:
             self.W_im2cap = tf.get_variable(name='W_im2cap',shape=[self.frame_dim,
                                                         self.hidden_dim],
-                                                        initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.01))
+                                                        initializer=tf.random_uniform_initializer(minval=-0.1,maxval=0.1))
             self.b_im2cap = tf.get_variable(name='b_im2cap',shape=[self.hidden_dim],
-                                                        initializer=tf.constant_initializer(0.1))
+                                                        initializer=tf.constant_initializer(0.0))
         with tf.variable_scope('Hid2Vocab') as scope:
             self.W_word_embed = tf.get_variable(name='W_H2vocab',shape=[self.hidden_dim,self.vocab_size],
-                                                             initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.01))
+                                                             initializer=tf.random_uniform_initializer(minval=-0.1,maxval=0.1))
             self.b_word_embed = tf.get_variable(name='b_H2vocab',shape=[self.vocab_size],
-                                                                initializer=tf.constant_initializer(0.1))
+                                                                initializer=tf.constant_initializer(0.0))
         with tf.variable_scope('Word_Vectors') as scope:
             self.word_emb = tf.get_variable(name='Word_embedding',shape=[self.vocab_size,self.hidden_dim],
-                                                                    initializer=tf.random_uniform_initializer(minval=-0.01,maxval=0.01))
+                                                                    initializer=tf.random_uniform_initializer(minval=-0.1,maxval=0.1))
 
     def create_RNNs(self):
         """Function to create 2 RNNs, one for processing the frames of a video and the other
@@ -80,7 +80,7 @@ class S2VT:
             curr_cap = self.caption[:,i]
             labels = tf.one_hot(indices=curr_cap,depth=self.vocab_size,on_value=1.0,off_value=0.0)
             xentropy = tf.nn.softmax_cross_entropy_with_logits(logits=curr_pred,labels=labels)
-            loss += xentropy*self.caption_mask[:,i]
+            loss += tf.reduce_sum(xentropy*self.caption_mask[:,i])
         loss = loss/tf.reduce_sum(self.caption_mask)
         return loss
 
@@ -106,7 +106,7 @@ class S2VT:
                 curr_word = tf.zeros([1,self.hidden_dim])
             else:
                 curr_word = tf.nn.embedding_lookup(self.word_emb,gen_caption_idx[-1])
-                curr_word = tf.reshape(curr_word,[1,100])
+                curr_word = tf.reshape(curr_word,[1,self.hidden_dim])
             #print curr_word.get_shape()
             tf.get_variable_scope().reuse_variables()
             with tf.variable_scope('LSTM_Video') as scope:
