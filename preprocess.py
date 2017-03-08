@@ -1,4 +1,6 @@
 #!/usr/bin/python
+import numpy as np
+
 """Functions to do the following:
             * Create vocabulary
             * Create dictionary mapping from word to word_id
@@ -44,7 +46,7 @@ def word_to_word_ids(word_counts):
     id_to_word[count+2] = '<pad>'
     word_to_id['<UNK>'] = count + 1
     id_to_word[count+1] = '<UNK>'
-    count += 2
+    count += 3
     for word in word_counts.keys():
         word_to_id[word] = count
         id_to_word[count] = word
@@ -75,4 +77,4 @@ def convert_caption(caption,word_to_id,max_caption_length):
             else:
                 curr_cap.append(word_to_id['<UNK>']) # word not present in chosen vocabulary
         caps.append(curr_cap)
-    return caps,cap_masks
+    return np.array(caps),np.array(cap_masks)

@@ -11,17 +11,8 @@ class S2VT:
         self.frame_dim = frame_dim
         self.batch_size = batch_size
         self.vocab_size = vocab_size
-        self.create_placeholders()
         self.create_weights()
         self.create_RNNs()
-        self.loss = self.build_model()
-
-    def create_placeholders(self):
-        """Function to create placeholders for building the graph"""
-        self.video = tf.placeholder(tf.float32,shape=[self.batch_size,self.n_steps,self.frame_dim],name='Input_Video')
-        self.video_test = tf.placeholder(tf.float32,shape=[1,self.n_steps,self.frame_dim],name='Test_Video')
-        self.caption = tf.placeholder(tf.int32,shape=[self.batch_size,self.n_steps],name='GT_Caption')
-        self.caption_mask = tf.placeholder(tf.float32,shape=[self.batch_size,self.n_steps],name='Caption_Mask')
 
     def create_weights(self):
         """Function to create weight matrices for transforming image to hidden vector shape
@@ -51,9 +42,13 @@ class S2VT:
 
     def build_model(self):
         """Function to build the graph for S2VT"""
-        self.video_rshp = tf.reshape(self.video,[self.batch_size*self.n_steps,self.frame_dim])
-        self.video_emb = tf.nn.xw_plus_b(self.video_rshp,self.W_im2cap,self.b_im2cap)
-        self.video_emb = tf.reshape(self.video_emb,[self.batch_size,self.n_steps,self.hidden_dim])
+        video = tf.placeholder(tf.float32,shape=[self.batch_size,self.n_steps,self.frame_dim],name='Input_Video')
+        caption = tf.placeholder(tf.int32,shape=[self.batch_size,self.n_steps],name='GT_Caption')
+        caption_mask = tf.placeholder(tf.float32,shape=[self.batch_size,self.n_steps],name='Caption_Mask')
+
+        video_rshp = tf.reshape(video,[self.batch_size*self.n_steps,self.frame_dim])
+        video_emb = tf.nn.xw_plus_b(video_rshp,self.W_im2cap,self.b_im2cap)
+        video_emb = tf.reshape(video_emb,[self.batch_size,self.n_steps,self.hidden_dim])
         state_vid = tf.zeros([self.batch_size,self.lstm_vid.state_size])
         state_cap = tf.zeros([self.batch_size,self.lstm_cap.state_size])
         padding = tf.zeros([self.batch_size,self.hidden_dim])
@@ -62,7 +57,7 @@ class S2VT:
             if i>0:
                 tf.get_variable_scope().reuse_variables()
             with tf.variable_scope('LSTM_Video') as scope:
-                out_vid,state_vid = self.lstm_vid(self.video_emb[:,i,:],state_vid)
+                out_vid,state_vid = self.lstm_vid(video_emb[:,i,:],state_vid)
             with tf.variable_scope('LSTM_Caption') as scope:
                 out_cap,state_cap = self.lstm_cap(tf.concat(1,[out_vid,padding]),state_cap)
 
@@ -70,24 +65,25 @@ class S2VT:
             if i==0:
                 curr_word = tf.zeros([self.batch_size,self.hidden_dim])
             else:
-                curr_word = tf.nn.embedding_lookup(self.word_emb,self.caption[:,i-1])
+                curr_word = tf.nn.embedding_lookup(self.word_emb,caption[:,i-1])
             tf.get_variable_scope().reuse_variables()
             with tf.variable_scope('LSTM_Video') as scope:
                 out_vid,state_vid = self.lstm_vid(padding,state_vid)
             with tf.variable_scope('LSTM_Caption') as scope:
                 out_cap,state_cap = self.lstm_cap(tf.concat(1,[curr_word,out_vid]),state_cap)
             curr_pred = tf.nn.xw_plus_b(out_cap,self.W_word_embed,self.b_word_embed)
-            curr_cap = self.caption[:,i]
+            curr_cap = caption[:,i]
             labels = tf.one_hot(indices=curr_cap,depth=self.vocab_size,on_value=1.0,off_value=0.0)
             xentropy = tf.nn.softmax_cross_entropy_with_logits(logits=curr_pred,labels=labels)
-            loss += tf.reduce_sum(xentropy*self.caption_mask[:,i])
-        loss = loss/tf.reduce_sum(self.caption_mask)
-        return loss
+            loss += tf.reduce_sum(xentropy*caption_mask[:,i])
+        loss = loss/tf.reduce_sum(caption_mask)
+        return video,caption,caption_mask,loss
 
     def generate_caption(self):
         """Function to test S2VT. Takes a single video and generates a caption describing the video"""
         gen_caption_idx = []
-        video_rshp = tf.reshape(self.video_test,[self.n_steps,self.frame_dim])
+        video_test = tf.placeholder(tf.float32,shape=[1,self.n_steps,self.frame_dim],name='Test_Video')
+        video_rshp = tf.reshape(video_test,[self.n_steps,self.frame_dim])
         video_emb = tf.nn.xw_plus_b(video_rshp,self.W_im2cap,self.b_im2cap)
         video_emb = tf.reshape(video_emb,[1,self.n_steps,self.hidden_dim])
         state_vid = tf.zeros([1,self.lstm_vid.state_size])
@@ -116,7 +112,7 @@ class S2VT:
             curr_pred = tf.nn.xw_plus_b(out_cap,self.W_word_embed,self.b_word_embed)
             #print curr_pred.get_shape()
             gen_caption_idx.append(tf.argmax(curr_pred,1)[0])
-        return gen_caption_idx
+        return gen_caption_idx,video_test
 
 if __name__ == "__main__":
     s2vt = S2VT()
