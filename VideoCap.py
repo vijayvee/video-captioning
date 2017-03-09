@@ -61,21 +61,21 @@ class S2VT:
             with tf.variable_scope('LSTM_Caption') as scope:
                 out_cap,state_cap = self.lstm_cap(tf.concat(1,[out_vid,padding]),state_cap)
 
-        for i in range(self.n_steps): #generate caption
-            if i==0:
-                curr_word = tf.zeros([self.batch_size,self.hidden_dim])
-            else:
-                curr_word = tf.nn.embedding_lookup(self.word_emb,caption[:,i-1])
+        for i in range(self.n_steps-2): #generate caption
+#            if i==0:
+ #               curr_word = tf.zeros([self.batch_size,self.hidden_dim])
+  #          else:
+            curr_word = tf.nn.embedding_lookup(self.word_emb,caption[:,i])
             tf.get_variable_scope().reuse_variables()
             with tf.variable_scope('LSTM_Video') as scope:
                 out_vid,state_vid = self.lstm_vid(padding,state_vid)
             with tf.variable_scope('LSTM_Caption') as scope:
                 out_cap,state_cap = self.lstm_cap(tf.concat(1,[curr_word,out_vid]),state_cap)
             curr_pred = tf.nn.xw_plus_b(out_cap,self.W_word_embed,self.b_word_embed)
-            curr_cap = caption[:,i]
+            curr_cap = caption[:,i+1]
             labels = tf.one_hot(indices=curr_cap,depth=self.vocab_size,on_value=1.0,off_value=0.0)
             xentropy = tf.nn.softmax_cross_entropy_with_logits(logits=curr_pred,labels=labels)
-            loss += tf.reduce_sum(xentropy*caption_mask[:,i])
+            loss += tf.reduce_sum(xentropy*caption_mask[:,i+1])
         loss = loss/tf.reduce_sum(caption_mask)
         return video,caption,caption_mask,loss
 
@@ -98,9 +98,10 @@ class S2VT:
                 out_cap,state_cap = self.lstm_cap(tf.concat(1,[out_vid,padding]),state_cap)
 
         for i in range(self.n_steps): #generate caption
-            if i==0:
-                curr_word = tf.zeros([1,self.hidden_dim])
-            else:
+	    if i==0:
+		curr_word = tf.nn.embedding_lookup(self.word_emb,0)
+		curr_word = tf.reshape(curr_word,[1,self.hidden_dim])
+	    else:
                 curr_word = tf.nn.embedding_lookup(self.word_emb,gen_caption_idx[-1])
                 curr_word = tf.reshape(curr_word,[1,self.hidden_dim])
             #print curr_word.get_shape()
