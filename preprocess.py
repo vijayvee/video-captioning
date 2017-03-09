@@ -40,13 +40,15 @@ def word_to_word_ids(word_counts):
     count = 0
     word_to_id = {}
     id_to_word = {}
-    word_to_id['<EOS>'] = count
-    id_to_word[count] = '<EOS>'
-    word_to_id['<pad>'] = count+2
-    id_to_word[count+2] = '<pad>'
-    word_to_id['<UNK>'] = count + 1
-    id_to_word[count+1] = '<UNK>'
-    count += 3
+    word_to_id['<BOS>'] = count
+    id_to_word[count] = '<BOS>'
+    word_to_id['<EOS>'] = count + 1
+    id_to_word[count + 1] = '<EOS>'
+    word_to_id['<pad>'] = count + 2
+    id_to_word[count + 2] = '<pad>'
+    word_to_id['<UNK>'] = count + 3
+    id_to_word[count + 3] = '<UNK>'
+    count += 4
     for word in word_counts.keys():
         word_to_id[word] = count
         id_to_word[count] = word
@@ -66,7 +68,7 @@ def convert_caption(caption,word_to_id,max_caption_length):
     if type(caption) == 'str':
         caption = [caption] # if single caption, make it a list of captions of length one
     for cap in caption:
-        cap = cap + ' <EOS>'
+        cap = '<BOS> ' + cap + ' <EOS>'
         nWords = cap.count(' ') + 1
         cap = cap + ' <pad>'*(max_caption_length-nWords)
         cap_masks.append([1.0]*nWords + [0.0]*(max_caption_length-nWords))
