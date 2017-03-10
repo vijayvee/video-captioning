@@ -1,0 +1,4 @@
+*.txt
+!YouTubeClips*
+!.gitignore
+!Features_VGG*

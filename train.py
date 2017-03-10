@@ -41,11 +41,13 @@ def fetch_data_batch(batch_size):
     captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
     curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
     return curr_vids,curr_caps,curr_masks
-@profile
+#@profile
 def train(nEpoch,learning_rate,batch_size):
     init()
-    vid2cap_s2vt = S2VT(n_steps=n_lstm_steps,hidden_dim=256,batch_size=batch_size,vocab_size=len(word_counts))
+    gen_caption_idx = []
+    vid2cap_s2vt = S2VT(n_steps=n_lstm_steps,hidden_dim=256,batch_size=batch_size,vocab_size=len(word2id))
     video,caption,caption_mask,loss = vid2cap_s2vt.build_model()
+    gen_caption,video_test = vid2cap_s2vt.generate_caption()
     print "Built model"
     for v in tf.trainable_variables():
         print v.name,v.get_shape()
@@ -56,30 +58,37 @@ def train(nEpoch,learning_rate,batch_size):
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.6)
     sess = tf.Session(config = tf.ConfigProto(gpu_options = gpu_options))
     sess.run(tf.initialize_all_variables())
-    for i in range(11):
+    for i in xrange(0,nIter):
         vids,caps,masks = fetch_data_batch(batch_size=batch_size)
 	
 #       print vids.shape,caps.shape,masks.shape
         _,curr_loss = sess.run([optim,loss],feed_dict={video:vids,
                                                         caption:caps,
                                                         caption_mask:masks})
-    	if i%10 == 0:
-            gen_caption,video_test = vid2cap_s2vt.generate_caption()
+	if i%10 == 0:
+	    print curr_loss
+    	#if i%10 == 0:
+        #    gen_caption,video_test = vid2cap_s2vt.generate_caption()
             caption_ = sess.run(gen_caption,feed_dict={video_test:np.expand_dims(vids[0],0)})
+	#    print id2word[caption_]
             caption_eng = []
     	    caption_GT = []
             for l in range(len(caption_)):
-    		    if id2word[caption_[l]]!='<EOS>':
-                        caption_eng.append(id2word[caption_[l]])
+    		if id2word[caption_[l]]!='<EOS>':
+                    caption_eng.append(id2word[caption_[l]])
             for l in range(len(caps[0])):
                 if caps[0][l]!=2:
                     caption_GT.append(id2word[caps[0][l]])
             print ' '.join(caption_eng)
     	    print ' '.join(caption_GT)
-            print curr_loss
+        #    print curr_loss
+	    del caption_eng
+	    del caption_GT
     	if i%1000 == 0:
     	    saver.save(sess,'VideoCap_{}_{}_{}_{}.ckpt'.format(nEpoch,learning_rate,batch_size,i))
     	    print 'Saved {}'.format(i)
 
 if __name__ == "__main__":
-    train(50,0.01,10)
+    train(250,0.01,10)
+
+

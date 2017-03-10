@@ -11,6 +11,7 @@ class S2VT:
         self.frame_dim = frame_dim
         self.batch_size = batch_size
         self.vocab_size = vocab_size
+	#self.gen_caption_idx = []
         self.create_weights()
         self.create_RNNs()
 
@@ -81,7 +82,7 @@ class S2VT:
 
     def generate_caption(self):
         """Function to test S2VT. Takes a single video and generates a caption describing the video"""
-        gen_caption_idx = []
+	gen_caption_idx = []
         video_test = tf.placeholder(tf.float32,shape=[1,self.n_steps,self.frame_dim],name='Test_Video')
         video_rshp = tf.reshape(video_test,[self.n_steps,self.frame_dim])
         video_emb = tf.nn.xw_plus_b(video_rshp,self.W_im2cap,self.b_im2cap)
