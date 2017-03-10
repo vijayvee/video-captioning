@@ -13,9 +13,9 @@ def build_vocab(word_count_thresh):
         Output:
                 vocabulary: Set of words in the vocabulary"""
 
-    sents_train = open('Data/sents_train_lc_nopunc.txt','r').read().splitlines()
-    sents_val = open('Data/sents_val_lc_nopunc.txt','r').read().splitlines()
-    sents_test = open('Data/sents_test_lc_nopunc.txt','r').read().splitlines()
+    sents_train = open('text_files/sents_train_lc_nopunc.txt','r').read().splitlines()
+    sents_val = open('text_files/sents_val_lc_nopunc.txt','r').read().splitlines()
+    sents_test = open('text_files/sents_test_lc_nopunc.txt','r').read().splitlines()
     all_captions = []
     word_counts = {}
     for sent in sents_train + sents_val + sents_test:
