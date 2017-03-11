@@ -93,7 +93,7 @@ if __name__=="__main__":
         with tf.Session() as sess:
 	    if ckpt_file:
 		saver_ = tf.train.import_meta_graph(ckpt_file)
-		saver_.restore(sess,tf.train.latest_checkpoint('.')
+		saver_.restore(sess,tf.train.latest_checkpoint('.'))
 		print "Restored model"
 	    else:
                 sess.run(tf.initialize_all_variables())
