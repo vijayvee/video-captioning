@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import numpy as np
 import tensorflow as tf
 import glob
@@ -9,22 +8,17 @@ from VideoCap import S2VT
 """Python script to train the video captioning system"""
 
 #Global initializations
-n_lstm_steps = 50
-
-def init():
-    """Function to initialize directories, dictionaries and vocabulary"""
-    global DATA_DIR,VIDEO_DIR,TEXT_DIR,Vid2Cap,Vid2Url,Url2Vid,word_counts,word2id,id2word,video_files
-    DATA_DIR = './Data/'
-    VIDEO_DIR = DATA_DIR + 'Features_VGG/'
-    TEXT_DIR = 'text_files/'
-    Vid2Cap = eval(open(TEXT_DIR + 'Vid2Cap.txt').read())
-    Vid2Url = eval(open(TEXT_DIR + 'Vid2Url_train.txt').read())
-    Url2Vid = eval(open(TEXT_DIR + 'Url2Vid_train.txt').read())
-    word_counts = build_vocab(0)
-    word2id,id2word = word_to_word_ids(word_counts)
-    video_files = glob.glob(VIDEO_DIR + '*.npy')
-    video_files = Vid2Url.keys()
-    print "{0} files processed".format(len(video_files))
+n_lstm_steps = 80
+DATA_DIR = './Data/'
+VIDEO_DIR = DATA_DIR + 'Features_VGG/'
+TEXT_DIR = 'text_files/'
+Vid2Cap = eval(open(TEXT_DIR + 'Video2Caption.txt').read())
+Vid2Url = eval(open(TEXT_DIR + 'Vid2Url_train.txt').read())
+Url2Vid = eval(open(TEXT_DIR + 'Url2Vid_train.txt').read())
+word_counts,unk_required = build_vocab(0)
+word2id,id2word = word_to_word_ids(word_counts,unk_required)
+video_files = Vid2Url.keys()
+print "{0} files processed".format(len(video_files))
 
 def fetch_data_batch_imgs(batch_size):
     """Function to fetch a batch of video features, captions and caption masks
@@ -39,9 +33,19 @@ def fetch_data_batch_imgs(batch_size):
     ind = np.random.randint(0,79)
     curr_vids = curr_vids[:,ind,:]
     captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
+    print captions
     curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
     return curr_vids,curr_caps,curr_masks
 
+def get_bias_vector():
+    """Function to return the initialization for the bias vector
+       for mapping from hidden_dim to vocab_size.
+       Borrowed from neuraltalk by Andrej Karpathy"""
+    bias_init_vector = np.array([1.0*word_counts[id2word[i]] for i in id2word])
+    bias_init_vector /= np.sum(bias_init_vector) # normalize to frequencies
+    bias_init_vector = np.log(bias_init_vector)
+    bias_init_vector -= np.max(bias_init_vector)
+    return bias_init_vector
 
 def fetch_data_batch(batch_size):
     """Function to fetch a batch of video features, captions and caption masks
@@ -53,12 +57,20 @@ def fetch_data_batch(batch_size):
                 curr_masks: Mask for the pad locations in curr_caps"""
     curr_batch_vids = np.random.choice(video_files,batch_size)
     curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url[vid] + '.npy') for vid in curr_batch_vids])
-    ind_50 = map(int,np.linspace(0,79,50))
+    ind_50 = map(int,np.linspace(0,79,n_lstm_steps))
     curr_vids = curr_vids[:,ind_50,:]
     captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
     curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
     return curr_vids,curr_caps,curr_masks
-#@profile
+
+def print_in_english(caption_idx):
+    """Function to take a list of captions with words mapped to ids and
+        print the captions after mapping word indices back to words."""
+    captions_english = [[id2word[word] for word in caption] for caption in caption_idx]
+    for caption in captions_english:
+        print ' '.join(caption)
+        print '..................................................'
+
 def train(nEpoch,learning_rate,batch_size,saved_sess = None):
     init()
     gen_caption_idx = []

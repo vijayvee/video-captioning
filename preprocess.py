@@ -16,10 +16,12 @@ def build_vocab(word_count_thresh):
     sents_train = open('text_files/sents_train_lc_nopunc.txt','r').read().splitlines()
     sents_val = open('text_files/sents_val_lc_nopunc.txt','r').read().splitlines()
     sents_test = open('text_files/sents_test_lc_nopunc.txt','r').read().splitlines()
+    unk_required = False
     all_captions = []
     word_counts = {}
     for sent in sents_train + sents_val + sents_test:
         caption = sent.split('\t')[-1]
+        caption = '<BOS> ' + caption + ' <EOS>'
         all_captions.append(caption)
         for word in caption.split(' '):
             if word_counts.has_key(word):
@@ -29,9 +31,10 @@ def build_vocab(word_count_thresh):
     for word in word_counts.keys():
         if word_counts[word] < word_count_thresh:
             word_counts.pop(word)
-    return word_counts
+            unk_required = True
+    return word_counts,unk_required
 
-def word_to_word_ids(word_counts):
+def word_to_word_ids(word_counts,unk_required):
     """Function to map individual words to their id's.
         Input:
                 word_counts: Dictionary with words mapped to their counts
@@ -40,15 +43,10 @@ def word_to_word_ids(word_counts):
     count = 0
     word_to_id = {}
     id_to_word = {}
-    word_to_id['<BOS>'] = count
-    id_to_word[count] = '<BOS>'
-    word_to_id['<EOS>'] = count + 1
-    id_to_word[count + 1] = '<EOS>'
-    word_to_id['<pad>'] = count + 2
-    id_to_word[count + 2] = '<pad>'
-    word_to_id['<UNK>'] = count + 3
-    id_to_word[count + 3] = '<UNK>'
-    count += 4
+    if unk_required:
+        word_to_id['<UNK>'] = count
+        id_to_word[count] = '<UNK>'
+        count += 1
     for word in word_counts.keys():
         word_to_id[word] = count
         id_to_word[count] = word
@@ -68,9 +66,8 @@ def convert_caption(caption,word_to_id,max_caption_length):
     if type(caption) == 'str':
         caption = [caption] # if single caption, make it a list of captions of length one
     for cap in caption:
-        cap = '<BOS> ' + cap + ' <EOS>'
         nWords = cap.count(' ') + 1
-        cap = cap + ' <pad>'*(max_caption_length-nWords)
+        cap = cap + ' <EOS>'*(max_caption_length-nWords)
         cap_masks.append([1.0]*nWords + [0.0]*(max_caption_length-nWords))
         curr_cap = []
         for word in cap.split(' '):
