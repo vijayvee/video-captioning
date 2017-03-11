@@ -67,8 +67,10 @@ def print_in_english(caption_idx):
     """Function to take a list of captions with words mapped to ids and
         print the captions after mapping word indices back to words."""
     captions_english = [[id2word[word] for word in caption] for caption in caption_idx]
-    for caption in captions_english:
-        print ' '.join(caption)
+    for i,caption in enumerate(captions_english):
+	if '<EOS>' in caption:
+       	    caption = caption[0:caption.index('<EOS>')]
+        print str(i+1) + ' ' + ' '.join(caption)
         print '..................................................'
 
 def train(nEpoch,learning_rate,batch_size,saved_sess = None):

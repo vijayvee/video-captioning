@@ -2,7 +2,7 @@
 import numpy as np
 import tensorflow as tf
 from train import *
-
+import sys
 #GLOBAL VARIABLE INITIALIZATIONS TO BUILD MODEL
 n_steps = 80
 hidden_dim = 500
@@ -55,23 +55,23 @@ def build_model():
     video_emb = tf.reshape(video_emb,[batch_size,n_steps,hidden_dim])
     padding = tf.zeros([batch_size,n_steps-1,hidden_dim])
     video_input = tf.concat(1,[video_emb,padding])
-
+    print "Video_input: {}".format(video_input.get_shape())
     #Run lstm_vid for 2*n_steps-1 timesteps
     with tf.variable_scope('LSTM_Video') as scope:
         out_vid,state_vid = tf.nn.dynamic_rnn(lstm_vid,video_input,dtype=tf.float32)
-
+    print "Video_output: {}".format(out_vid.get_shape())
     #Prepare input for lstm_cap
     padding = tf.zeros([batch_size,n_steps,hidden_dim])
     caption_vectors = tf.nn.embedding_lookup(word_emb,caption[:,0:n_steps-1])
     caption_2n = tf.concat(1,[padding,caption_vectors])
     caption_input = tf.concat(2,[caption_2n,out_vid])
-
+    print "Caption_input: {}".format(caption_input.get_shape())
     #Run lstm_cap for 2*n_steps-1 timesteps
     with tf.variable_scope('LSTM_Caption') as scope:
         out_cap,state_cap = tf.nn.dynamic_rnn(lstm_cap,caption_input,dtype=tf.float32)
-
+    print "Caption_output: {}".format(out_cap.get_shape())
     #Compute masked loss
-    output_captions = out_cap[:,n_steps:]
+    output_captions = out_cap[:,n_steps:,:]
     output_logits = tf.reshape(output_captions,[-1,hidden_dim])
     output_logits = tf.nn.xw_plus_b(output_logits,W_H2vocab,b_H2vocab)
     output_labels = tf.reshape(caption[:,1:],[-1])
@@ -83,15 +83,33 @@ def build_model():
 
 if __name__=="__main__":
     with tf.Graph().as_default():
+	learning_rate = 0.0001
         video,caption,caption_mask,output_logits,loss = build_model()
-        optim = tf.train.AdamOptimizer(learning_rate = 0.01).minimize(loss)
+        optim = tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(loss)
+	nEpoch = int(sys.argv[1])
+	nIter = int(nEpoch*1200/batch_size)
+	ckpt_file = 'VideoCap_Dyn_10_0.001_100_11000.ckpt.meta'
+	saver = tf.train.Saver()
         with tf.Session() as sess:
-            sess.run(tf.initialize_all_variables())
-            vids,caps,caps_mask = fetch_data_batch(batch_size=batch_size)
-            _,curr_loss,o_l = sess.run([optim,loss,output_logits],feed_dict={video:vids,
+	    if ckpt_file:
+		saver_ = tf.train.import_meta_graph(ckpt_file)
+		saver_.restore(sess,tf.train.latest_checkpoint('.')
+		print "Restored model"
+	    else:
+                sess.run(tf.initialize_all_variables())
+	    for i in range(nIter):
+                vids,caps,caps_mask = fetch_data_batch(batch_size=batch_size)
+                _,curr_loss,o_l = sess.run([optim,loss,output_logits],feed_dict={video:vids,
                                                                             caption:caps,
                                                                             caption_mask:caps_mask})
-            output_logits = o_l.reshape([batch_size,n_steps-1,vocab_size])
-            output_captions = np.argmax(output_logits,2)
-            print print_in_english(output_captions)
-            print curr_loss,o_l.shape
+		if i%10 == 0:
+		    print "\nIteration {} \n".format(i)
+                    out_logits = o_l.reshape([batch_size,n_steps-1,vocab_size])
+                    output_captions = np.argmax(out_logits,2)
+                    print_in_english(output_captions[0:4])
+		    print "GT Captions"
+		    print_in_english(caps[0:4])
+                    print "Current loss: {} ".format(curr_loss)
+		if i%1000 == 0:
+		    saver.save(sess,'VideoCap_Dyn_{}_{}_{}_{}.ckpt'.format(batch_size,learning_rate,nEpoch,i))
+		    print 'Saved {}'.format(i)
