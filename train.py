@@ -18,6 +18,10 @@ Url2Vid = eval(open(TEXT_DIR + 'Url2Vid_train.txt').read())
 word_counts,unk_required = build_vocab(0)
 word2id,id2word = word_to_word_ids(word_counts,unk_required)
 video_files = Vid2Url.keys()
+val_files = [i.split('\t')[0] for i in open('text_files/sents_val_lc_nopunc.txt').read().splitlines()]
+val_files = list(set(val_files))
+Vid2Url_Full = eval(open(TEXT_DIR + 'Vid2Url_Full.txt').read())
+Vid2Cap_val = eval(open(TEXT_DIR + 'Vid2Cap_val.txt').read())
 print "{0} files processed".format(len(video_files))
 
 def fetch_data_batch_imgs(batch_size):
@@ -62,6 +66,22 @@ def fetch_data_batch(batch_size):
     captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
     curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
     return curr_vids,curr_caps,curr_masks
+
+def fetch_data_batch_val(batch_size):
+    """Function to fetch a batch of video features from the validation set and its captions.
+        Input:
+                batch_size: Size of batch to load
+        Output:
+                curr_vids: Features of the randomly selected batch of video_files
+                curr_caps: Ground truth (padded) captions for the selected videos"""
+    curr_batch_vids = np.random.choice(val_files,batch_size)
+    curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url_Full[vid] + '.npy') for vid in curr_batch_vids])
+    ind_50 = map(int,np.linspace(0,79,n_lstm_steps))
+    curr_vids = curr_vids[:,ind_50,:]
+    captions = [np.random.choice(Vid2Cap_val[vid],1)[0] for vid in curr_batch_vids]
+    curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
+    return curr_vids,curr_caps,curr_masks
+
 
 def print_in_english(caption_idx):
     """Function to take a list of captions with words mapped to ids and
