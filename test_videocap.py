@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import numpy as np
 import tensorflow as tf
-from train import *
+from utils import *
 import sys
 #GLOBAL VARIABLE INITIALIZATIONS TO BUILD MODEL
 n_steps = 80
@@ -95,15 +95,22 @@ if __name__=="__main__":
         		print "Restored model"
     	    else:
                 sess.run(tf.initialize_all_variables())
-            vid,caption_GT,_ = fetch_data_batch_val(1)
-            caps,caps_mask = convert_caption(['<BOS>'],word2id,80)
-            for i in range(n_steps):
-                o_l = sess.run(output_logits,feed_dict={video:vid,caption:caps,caption_mask:caps_mask})
-                out_logits = o_l.reshape([batch_size,n_steps-1,vocab_size])
-                output_captions = np.argmax(out_logits,2)
-                caps[0][i+1] = output_captions[0][i]
-                if id2word[output_captions[0][i]] == '<EOS>':
+            while(1):
+                vid,caption_GT,_,video_urls = fetch_data_batch(1)
+                caps,caps_mask = convert_caption(['<BOS>'],word2id,80)
+                for i in range(n_steps):
+                    o_l = sess.run(output_logits,feed_dict={video:vid,caption:caps,caption_mask:caps_mask})
+                    out_logits = o_l.reshape([batch_size,n_steps-1,vocab_size])
+                    output_captions = np.argmax(out_logits,2)
+                    caps[0][i+1] = output_captions[0][i]
                     print_in_english(caps)
+                    if id2word[output_captions[0][i]] == '<EOS>':
+                        break
+                print '............................\nGT Caption:\n'
+                print_in_english(caption_GT)
+                play_video = raw_input('Should I play the video? ')
+                if play_video.lower() == 'y':
+                    playVideo(video_urls)
+                test_again = raw_input('Want another test run? ')
+                if test_again.lower() == 'n':
                     break
-            print '............................\nGT Caption:\n'
-            print_in_english(caption_GT)

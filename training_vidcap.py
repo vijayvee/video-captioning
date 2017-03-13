@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import numpy as np
 import tensorflow as tf
-from train import *
+from utils import *
 import sys
 #GLOBAL VARIABLE INITIALIZATIONS TO BUILD MODEL
 n_steps = 80
@@ -98,7 +98,7 @@ if __name__=="__main__":
 	    else:
                 sess.run(tf.initialize_all_variables())
 	    for i in range(nIter):
-                vids,caps,caps_mask = fetch_data_batch(batch_size=batch_size)
+                vids,caps,caps_mask,_ = fetch_data_batch(batch_size=batch_size)
                 _,curr_loss,o_l = sess.run([optim,loss,output_logits],feed_dict={video:vids,
                                                                             caption:caps,
                                                                             caption_mask:caps_mask})
