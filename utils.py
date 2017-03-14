@@ -15,34 +15,15 @@ DATA_DIR = './Data/'
 VIDEO_DIR = DATA_DIR + 'Features_VGG/'
 YOUTUBE_CLIPS_DIR = '/home/vijay/Video_Captioning/Data/YoutubeClips/'
 TEXT_DIR = 'text_files/'
-Vid2Cap = eval(open(TEXT_DIR + 'Video2Caption.txt').read())
-Vid2Url = eval(open(TEXT_DIR + 'Vid2Url_train.txt').read())
-Url2Vid = eval(open(TEXT_DIR + 'Url2Vid_train.txt').read())
+Vid2Url = eval(open(TEXT_DIR + 'Vid2Url_Full.txt').read())
+Vid2Cap_train = eval(open(TEXT_DIR + 'Vid2Cap_train.txt').read())
+Vid2Cap_val = eval(open(TEXT_DIR + 'Video2Caption_test.txt').read())
 word_counts,unk_required = build_vocab(0)
 word2id,id2word = word_to_word_ids(word_counts,unk_required)
-video_files = Vid2Url.keys()
-val_files = [i.split('\t')[0] for i in open('text_files/sents_val_lc_nopunc.txt').read().splitlines()]
-val_files = list(set(val_files))
-Vid2Url_Full = eval(open(TEXT_DIR + 'Vid2Url_Full.txt').read())
-Vid2Cap_val = eval(open(TEXT_DIR + 'Vid2Cap_val.txt').read())
-print "{0} files processed".format(len(video_files))
+video_files = Vid2Cap_train.keys()
+val_files = Vid2Cap_val.keys()
 
-def fetch_data_batch_imgs(batch_size):
-    """Function to fetch a batch of video features, captions and caption masks
-        Input:
-                batch_size: Size of batch to load
-        Output:
-                curr_vids: Features of the randomly selected batch of video_files
-                curr_caps: Ground truth (padded) captions for the selected videos
-                curr_masks: Mask for the pad locations in curr_caps"""
-    curr_batch_vids = np.random.choice(video_files,batch_size)
-    curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url[vid] + '.npy') for vid in curr_batch_vids])
-    ind = np.random.randint(0,79)
-    curr_vids = curr_vids[:,ind,:]
-    captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
-    print captions
-    curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
-    return curr_vids,curr_caps,curr_masks
+print "{0} files processed".format(len(video_files))
 
 def get_bias_vector():
     """Function to return the initialization for the bias vector
@@ -67,7 +48,7 @@ def fetch_data_batch(batch_size):
     curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url[vid] + '.npy') for vid in curr_batch_vids])
     ind_50 = map(int,np.linspace(0,79,n_lstm_steps))
     curr_vids = curr_vids[:,ind_50,:]
-    captions = [np.random.choice(Vid2Cap[vid],1)[0] for vid in curr_batch_vids]
+    captions = [np.random.choice(Vid2Cap_train[vid],1)[0] for vid in curr_batch_vids]
     curr_caps,curr_masks = convert_caption(captions,word2id,n_lstm_steps)
     return curr_vids,curr_caps,curr_masks,video_urls
 
@@ -78,9 +59,10 @@ def fetch_data_batch_val(batch_size):
         Output:
                 curr_vids: Features of the randomly selected batch of video_files
                 curr_caps: Ground truth (padded) captions for the selected videos"""
+
     curr_batch_vids = np.random.choice(val_files,batch_size)
-    curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url_Full[vid] + '.npy') for vid in curr_batch_vids])
-    video_urls = [Vid2Url_Full[vid] for vid in curr_batch_vids]
+    curr_vids = np.array([np.load(VIDEO_DIR + Vid2Url[vid] + '.npy') for vid in curr_batch_vids])
+    video_urls = [Vid2Url[vid] for vid in curr_batch_vids]
     ind_50 = map(int,np.linspace(0,79,n_lstm_steps))
     curr_vids = curr_vids[:,ind_50,:]
     captions = [np.random.choice(Vid2Cap_val[vid],1)[0] for vid in curr_batch_vids]
