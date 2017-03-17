@@ -13,7 +13,7 @@ from VideoCap import S2VT
 n_lstm_steps = 80
 DATA_DIR = './Data/'
 VIDEO_DIR = DATA_DIR + 'Features_VGG/'
-YOUTUBE_CLIPS_DIR = '/home/vijay/Video_Captioning/Data/YoutubeClips/'
+YOUTUBE_CLIPS_DIR = '/home/vijay/video-captioning/Data/YouTubeClips/YouTubeClips/'
 TEXT_DIR = 'text_files/'
 Vid2Url = eval(open(TEXT_DIR + 'Vid2Url_Full.txt').read())
 Vid2Cap_train = eval(open(TEXT_DIR + 'Vid2Cap_train.txt').read())
