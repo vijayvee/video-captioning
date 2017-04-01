@@ -11,7 +11,7 @@ at the University of Texas, Austin.
 
 Attached below is the **architecture diagram of S2VT** as given in their [paper](http://www.cs.utexas.edu/users/ml/papers/venugopalan.iccv15.pdf).
 
-![Arch_S2VT](images/Screenshot from 2017-03-17 23:44:05.png)
+![Arch_S2VT](images/Arch_S2VT.png)
 
 The **working** of the system while generating a caption for a given video is represented below diagrammatically.
 
