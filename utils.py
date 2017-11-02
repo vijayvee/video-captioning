@@ -6,7 +6,7 @@ from preprocess import *
 import cv2
 import imageio
 
-"""Python script to train the video captioning system"""
+"""Utilities for training the video captioning system"""
 
 #Global initializations
 n_lstm_steps = 80
