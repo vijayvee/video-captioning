@@ -5,7 +5,6 @@ import glob
 from preprocess import *
 import cv2
 import imageio
-from VideoCap import S2VT
 
 """Python script to train the video captioning system"""
 
