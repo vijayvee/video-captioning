@@ -1,11 +1,9 @@
 # Automated Video Captioning using S2VT
 
 ## Introduction
-This repository contains my implementation of a video captioning system. This system takes as input a **video** and generates a **caption** describing the event
+This repository contains my implementation of a video captioning system. This system takes as input a **video** and generates a **caption** describing the event in the video. 
 
-in the video. I took inspiration from [Sequence to Sequence -- Video to Text](https://vsubhashini.github.io/s2vt.html), a video captioning work proposed by researchers 
-
-at the University of Texas, Austin.
+I took inspiration from [Sequence to Sequence -- Video to Text](https://vsubhashini.github.io/s2vt.html), a video captioning work proposed by researchers at the University of Texas, Austin.
 
 ## S2VT - Architecture and working
 
