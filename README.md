@@ -5,6 +5,17 @@ This repository contains my implementation of a video captioning system. This sy
 
 I took inspiration from [Sequence to Sequence -- Video to Text](https://vsubhashini.github.io/s2vt.html), a video captioning work proposed by researchers at the University of Texas, Austin.
 
+## Requirements
+For running my code and reproducing the results, the following packages need to be installed first. I have used Python 2.7 for the whole of this project.
+
+Packages:
+* TensorFlow
+* Caffe
+* NumPy
+* cv2
+* imageio
+* scikit-image
+
 ## S2VT - Architecture and working
 
 Attached below is the **architecture diagram of S2VT** as given in their [paper](http://www.cs.utexas.edu/users/ml/papers/venugopalan.iccv15.pdf).
