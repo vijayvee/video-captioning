@@ -41,3 +41,6 @@ Even though S2VT was trained on MSVD, M-VAD and MPII-MD, I have trained my syste
 # Demo
 
 A **demo of my system** can be found [here](https://www.youtube.com/watch?v=tmLzgFdI7Xg)
+
+# Acknowledgements
+* [Sequence to Sequence -- Video to Text](https://arxiv.org/abs/1505.00487) - Subhasini Venugopalan et al.
