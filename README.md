@@ -26,6 +26,20 @@ The **working** of the system while generating a caption for a given video is re
 
 ![S2VT_Working](images/S2VT.png)
 
+## Running instructions
+
+1. Install all the packages mentioned in the 'Requirements' section for the smooth running of this project.
+2. Using [Vid2Url_Full.txt](text_files/Vid2Url_Full.txt), download the dataset clips from Youtube and store in <YOUTUBE_CLIPS_DIR>.
+   * Example to use Vid2Url - {'vid1547': 'm1NR0uNNs5Y_104_110'}
+   * YouTube video identifier - m1NR0uNNs5Y  
+   * Start time - 104 seconds, End time - 110 seconds
+   * Download frames between 104 seconds and 110 seconds in https://www.youtube.com/watch?v=m1NR0uNNs5Y
+   * Relevant frames for video id 'vid1547' have been downloaded
+3. Pass downloaded video paths and batch size (depending on hardware constraints) to extract_feats() in [Extract_Feats.py](Extract_Feats.py) to extract VGG16 features for the downloaded video clips and store in <VIDEO_DIR>.
+4. Change paths in lines 13 to 16 in [utils.py](utils.py) to point to directories in your workspace.
+5. Run [training_vidcap.py](training_vidcap.py) with the number of epochs as a command line argument. eg. python training_vidcap.py 10
+6. Pass saved checkpoint files from Step 5 to [test_videocap.py](test_videocap.py) to run trained model on the validation set.
+
 ## Sample results
 
 Attached below are a few screenshots from caption generation for videos from the **validation set**.
