@@ -59,7 +59,7 @@ def build_model():
     video_emb = tf.nn.xw_plus_b(video_rshp,W_im2cap,b_im2cap)
     video_emb = tf.reshape(video_emb,[batch_size,n_steps,hidden_dim])
     padding = tf.zeros([batch_size,n_steps-1,hidden_dim])
-    video_input = tf.concat(1,[video_emb,padding])
+    video_input = tf.concat([video_emb,padding],1)
     print "Video_input: {}".format(video_input.get_shape())
     #Run lstm_vid for 2*n_steps-1 timesteps
     with tf.variable_scope('LSTM_Video') as scope:
@@ -70,8 +70,8 @@ def build_model():
     padding = tf.zeros([batch_size,n_steps,hidden_dim])
     caption_vectors = tf.nn.embedding_lookup(word_emb,caption[:,0:n_steps-1])
     caption_vectors = tf.nn.dropout(caption_vectors,keep_prob=dropout_prob)
-    caption_2n = tf.concat(1,[padding,caption_vectors])
-    caption_input = tf.concat(2,[caption_2n,out_vid])
+    caption_2n = tf.concat([padding,caption_vectors],1)
+    caption_input = tf.concat([caption_2n,out_vid],2)
     print "Caption_input: {}".format(caption_input.get_shape())
     #Run lstm_cap for 2*n_steps-1 timesteps
     with tf.variable_scope('LSTM_Caption') as scope:
