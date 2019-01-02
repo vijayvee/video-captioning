@@ -1,0 +1,2 @@
+model_checkpoint_path: "VideoCap_Dyn_1_1e-05_10_0.ckpt"
+all_model_checkpoint_paths: "VideoCap_Dyn_1_1e-05_10_0.ckpt"
