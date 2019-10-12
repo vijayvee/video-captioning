@@ -20,6 +20,7 @@ def extract_feats(filenames,batch_size):
     mean_file = './ilsvrc_2012_mean.npy'
     transformer = caffe.io.Transformer({'data':net.blobs['data'].data.shape})
     transformer.set_mean('data',np.load(mean_file).mean(1).mean(1))
+    transformer.set_channel_swap('data', (2,1,0))
     transformer.set_transpose('data',(2,0,1))
     transformer.set_raw_scale('data',255.0)
     net.blobs['data'].reshape(batch_size,3,224,224)
